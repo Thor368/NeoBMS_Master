@@ -1,0 +1,16 @@
+//////  Example config file - Check before use!
+
+
+#include "BMS_config.h"
+
+uint32_t BMS_cell_count[BMS_chip_count] = {12, 12, 10};
+uint32_t BMS_temp_count[BMS_chip_count] = {0, 0};
+uint32_t Cell_count;
+int32_t BMS_OV = BMS_std_OV;
+
+void Battery_Init()
+{
+	Cell_count = 0;
+	for (uint32_t i = 0; i < BMS_chip_count; i++)
+		Cell_count += BMS_cell_count[i];
+}

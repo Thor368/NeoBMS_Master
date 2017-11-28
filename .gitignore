@@ -1,0 +1,7 @@
+/Release
+/Debug
+!/Debug/sources.mk
+/inc/Battery_config*
+!/inc/Battery_config_example.h
+/src/Battery_config*
+!/src/Battery_config_example.c.bak
