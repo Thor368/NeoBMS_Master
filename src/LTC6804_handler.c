@@ -710,16 +710,19 @@ void LTC_handler()
 			break;
 				
 			case READ_ITMP:
-				if (LTC_Read_Register(&(chips[i].chip), LTC_REGISTER_ST))
+				if (LTC_Start(&(chips[i].chip), LTC_START_PLADC))
 				{
-					chips[i].Status = RES;
-					break;
+					if (LTC_Read_Register(&(chips[i].chip), LTC_REGISTER_ST))
+					{
+						chips[i].Status = RES;
+						break;
+					}
+
+					chips[i].Int_Temp = LTC_calc_int_Temp(chips[i].chip.STAR.ITMP);
+					chips[i].Int_Temp_OK = chips[i].chip.STAR.ITMP < 27975;
+
+					chips[i].Status = SAMPLE_AUX;
 				}
-
-				chips[i].Int_Temp = LTC_calc_int_Temp(chips[i].chip.STAR.ITMP);
-				chips[i].Int_Temp_OK = chips[i].chip.STAR.ITMP < 27975;
-
-				chips[i].Status = SAMPLE_AUX;
 			break;
 
 			case SAMPLE_AUX:
@@ -739,17 +742,20 @@ void LTC_handler()
 			break;
 
 			case READ_AUX:
-				if (LTC_Read_Register(&(chips[i].chip), LTC_REGISTER_AV))
+				if (LTC_Start(&(chips[i].chip), LTC_START_PLADC))
 				{
-					chips[i].Status = RES;
-					break;
-				}
+					if (LTC_Read_Register(&(chips[i].chip), LTC_REGISTER_AV))
+					{
+						chips[i].Status = RES;
+						break;
+					}
 
 #ifdef BMS_Temp_c0
-				BMS_Calc_Temp(i);
+					BMS_Calc_Temp(i);
 #endif
 
-				chips[i].Status = SAMPLE_CV;
+					chips[i].Status = SAMPLE_CV;
+				}
 			break;
 
 			case SAMPLE_CV:
