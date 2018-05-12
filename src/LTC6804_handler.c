@@ -3,8 +3,11 @@
 #include "BMS_config.h"
 #include <math.h>
 
-
+#if BMS_chip_count > 0
 BMS_t chips[BMS_chip_count];
+#else
+BMS_t chips[1];
+#endif
 
 bool BMS_Balance_Scheduled = false;
 uint32_t BMS_Balance_Timer = 0;
@@ -27,11 +30,17 @@ uint32_t BMS_fault_delay_timer = 0;
 uint32_t BMS_charge_delay_timer = 0;
 uint32_t BMS_discharge_delay_timer = 0;
 
-void BMS_RES_sets(uint32_t i)
+void BMS_RES_sets(int32_t i)
 {
 	uint32_t j;
 	
-	chips[i].chip.address = LTC_ADDRESS(i);
+	if (i >= 0)
+		chips[i].chip.address = LTC_ADDRESS(i);
+	else
+	{
+		chips[0].chip.address = LTC_BROADCAST;
+		i = 0;
+	}
 	
 	chips[i].Int_Temp = 0;
 
@@ -122,13 +131,15 @@ void BMS_RES_sets(uint32_t i)
 
 void LTC_handler_Init()
 {
-	uint32_t i;
-	
 	LTC_Init();
 	Battery_Init();
 	
-	for (i = 0; i < BMS_chip_count; i++)
+#if BMS_chip_count > 0
+	for (uint32_t i = 0; i < BMS_chip_count; i++)
 		BMS_RES_sets(i);
+#else
+	BMS_RES_sets(0);
+#endif
 }
 
 void BMS_Check_Voltage(uint8_t index)
@@ -265,6 +276,7 @@ void LTC_Balancing_handler()
 	Global_Max_U = chips[0].Cell_Max_U;
 	Global_Min_U = chips[0].Cell_Min_U;
 
+#if BMS_chip_count > 0
 	for (uint8_t i = 0; i < BMS_chip_count; i++)
 	{
 		if (chips[i].Cell_Max_U > Global_Max_U)
@@ -282,6 +294,23 @@ void LTC_Balancing_handler()
 			chips[i].Balance_timer = 0;
 		}
 	}
+#else
+	if (chips[0].Cell_Max_U > Global_Max_U)
+		Global_Max_U = chips[0].Cell_Max_U;
+
+	if (chips[0].Cell_Min_U < Global_Min_U)
+		Global_Min_U = chips[0].Cell_Min_U;
+
+	if (chips[0].Health == BMS_Health_OK)
+		chips[0].Balance_Permission = true;
+	else
+	{
+		chips[0].Balance_Permission = false;
+		chips[0].Balance_derating = 0;
+		chips[0].Balance_timer = 0;
+	}
+#endif
+
 	
 	int32_t delta = Global_Max_U - Global_Min_U;
 	if ((Global_Max_U < BMS_Balance_U) || (delta <= 10000))
@@ -290,15 +319,23 @@ void LTC_Balancing_handler()
 		BMS_Balance_Scheduled = true;
 	
 	bool Local_Balance_Permission = true;
+#if BMS_chip_count > 0
 	for (uint8_t i = 0; i < BMS_chip_count; i++)
 		if (!chips[i].Balance_Permission)
+#else
+		if (!chips[0].Balance_Permission)
+#endif
 			Local_Balance_Permission = false;
 
 	if (BMS_Balance_Scheduled && Local_Balance_Permission)
 	{
 		int32_t Balance_Threashold = Global_Min_U + 10000;
 
+#if BMS_chip_count > 0
 		for (uint8_t i = 0; i < BMS_chip_count; i++)
+#else
+		uint8_t i = 0;
+#endif
 		{
 /*			if (chips[i].Int_Temp > (BMS_ITMP_LIM + BMS_ITMP_HYST*2))
 			{
@@ -358,12 +395,20 @@ void LTC_Balancing_handler()
 	}
 	else
 	{
+#if BMS_chip_count > 0
 		for (uint8_t i = 0; i < BMS_chip_count; i++)
+#else
+		uint8_t i = 0;
+#endif
 			for (uint8_t j = 0; j < 12; j++)
 				chips[i].Cell_Bleed[j] = false;
 	}
 	
+#if BMS_chip_count > 0
 	for (uint8_t i = 0; i < BMS_chip_count; i++)
+#else
+		uint8_t i = 0;
+#endif
 	{
 		chips[i].chip.CFGR.DCC1 =  chips[i].Cell_Bleed[0];
 		chips[i].chip.CFGR.DCC2 =  chips[i].Cell_Bleed[1];
@@ -388,7 +433,11 @@ void BMS_IO_handler()
 	bool local_Discharge_permitted = true;
 	bool local_BMS_Health = true;
 
+#if BMS_chip_count > 0
 	for (uint8_t x = 0; x < BMS_chip_count; x++)
+#else
+	uint8_t x = 0;
+#endif
 	{
 		if (chips[x].Health != BMS_Health_OK)
 			local_BMS_Health = false;
@@ -462,12 +511,20 @@ void LTC_handler()
 	LTC_Balancing_handler();
 	BMS_IO_handler();
 	
+#if BMS_chip_count > 0
 	for (uint8_t i = 0; i < BMS_chip_count; i++)
+#else
+	uint8_t i = 0;
+#endif
 	{
 		switch (chips[i].Status)
 		{
 			case RES:
+#if BMS_chip_count > 0
 				BMS_RES_sets(i);
+#else
+				BMS_RES_sets(-1);
+#endif
 				
 				if (!(LTC_Write_Register(&(chips[i].chip), LTC_REGISTER_CFGR | LTC_REGISTER_COMM)))
 				{

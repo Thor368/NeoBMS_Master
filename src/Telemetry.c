@@ -178,7 +178,11 @@ void Telemetry_handler()
 		uart_transmit_string(buf);
 
 		strcpy(buf, "Slavecount: ");
+#if BMS_chip_count > 0
 		itoa(BMS_chip_count, icache, 10);
+#else
+		strcpy(buf, "1");
+#endif
 		strcat(buf, icache);
 		strcat(buf, "\n");
 		uart_transmit_string(buf);
@@ -220,7 +224,11 @@ void Telemetry_handler()
 		{
 			strcat(buf, "Scheduled and ");
 			strcpy(icache, "Permitted\n");
+#if BMS_chip_count > 0
 			for (uint8_t j = 0; j < BMS_chip_count; j++)
+#else
+			uint8_t j = 0;
+#endif
 				if (!chips[j].Balance_Permission)
 					strcat(buf, "Not ");
 			strcat(buf, icache);
@@ -249,7 +257,11 @@ void Telemetry_handler()
 		strcat(buf, "mV\n\n");
 		uart_transmit_string(buf);
 
+#if BMS_chip_count > 0
 		for (uint32_t i = 0; i < BMS_chip_count; i++)
+#else
+		uint8_t i = 0;
+#endif
 		{
 			strcpy(buf, "---BMS ");             // Titel
 			itoa(i, icache, 16);

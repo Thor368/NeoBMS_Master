@@ -93,7 +93,12 @@ typedef struct
 	int32_t Temp_sensors[5];
 } BMS_t;
 
+#if BMS_chip_count > 0
 extern BMS_t chips[BMS_chip_count];
+#else
+extern BMS_t chips[1];
+#endif
+
 extern bool BMS_Balance_Scheduled;
 
 extern int32_t Global_Max_U;
