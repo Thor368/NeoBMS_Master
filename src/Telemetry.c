@@ -201,6 +201,12 @@ void Telemetry_handler()
 		strcat(buf, "mV\n");
 		uart_transmit_string(buf);
 
+		strcpy(buf, "SOC: ");
+		itoa(Global_SOC, icache, 10);
+		strcat(buf, icache);
+		strcat(buf, "%\n");
+		uart_transmit_string(buf);
+
 #ifdef BMS_I_SENSOR
 		strcpy(buf, "Battery I: ");
 		itoa(Battery_I, icache, 10);

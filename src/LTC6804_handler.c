@@ -11,6 +11,7 @@ uint32_t BMS_Balance_Timer = 0;
 
 int32_t Global_Max_U = 0;
 int32_t Global_Min_U = 0;
+int32_t Global_SOC = 0;
 
 #ifdef BMS_I_SENSOR
 int32_t Battery_I = 0;
@@ -215,6 +216,12 @@ void BMS_Calc_Voltages(uint8_t index)
 		chips[index].Wrong_Cell_Count = true;
 	else
 		chips[index].Wrong_Cell_Count = false;
+}
+
+void BMS_calc_SOC()
+{
+	int32_t avr = (Global_Max_U + Global_Min_U)/2;
+	Global_SOC = (avr - BMS_SOC_0)*100/(BMS_SOC_100 - BMS_SOC_0);
 }
 
 #ifdef BMS_Temp_c0
@@ -789,6 +796,7 @@ void LTC_handler()
 					
 					BMS_Calc_Voltages(i);
 					BMS_Check_Voltage(i);
+					BMS_calc_SOC();
 
 #ifdef BMS_I_SENSOR
 					if ((chips[i].Aux == BMS_AUX_Current_Temp) ||
@@ -810,7 +818,10 @@ void LTC_handler()
 							Battery_I_offset += (int32_t) chips[i].chip.AVAR.G1V;
 
 							if (abs(Battery_I_offset - Battery_I_offset_last) < 110)
+							{
 								Battery_I_offset_timer = Tick;
+								Battery_I_offset /= 16;
+							}
 						}
 						else
 							Battery_I = BMS_Calc_Current(i, Battery_I_offset);

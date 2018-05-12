@@ -99,6 +99,7 @@ extern bool BMS_Balance_Scheduled;
 extern int32_t Global_Max_U;
 extern int32_t Global_Min_U;
 extern int32_t Battery_I;
+extern int32_t Global_SOC;
 
 extern bool BMS_Charge_permitted;
 extern bool BMS_Discharge_permitted;
