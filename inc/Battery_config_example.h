@@ -7,8 +7,13 @@
 #include "IO.h"
 
 #define BMS_chip_count  3         // Number of BMS chips
+#if BMS_chip_count > 0
 extern uint32_t BMS_cell_count[BMS_chip_count];  // Number of Cells
 extern uint32_t BMS_temp_count[BMS_chip_count];  // Number of Temperature Sensors
+#else
+extern uint32_t BMS_cell_count[1];  // Number of Cells
+extern uint32_t BMS_temp_count[1];  // Number of Temperature Sensors
+#endif
 extern uint32_t Cell_count;
 extern int32_t BMS_OV;
 
